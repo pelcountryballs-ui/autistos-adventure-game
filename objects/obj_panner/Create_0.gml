@@ -1,0 +1,9 @@
+panx = 0;
+pany = 0;
+startx = camerax();
+starty = cameray();
+finalx = x;
+finaly = y;
+panmax = 1;
+pantimer = 0;
+type = 0;

@@ -1,0 +1,1 @@
+method(id, _soulmodedata.draw)()

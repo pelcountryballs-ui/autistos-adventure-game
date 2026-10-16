@@ -1,0 +1,10 @@
+target = 439493;
+con = 1;
+siner = 0;
+xx = camerax();
+yy = cameray();
+alarm[4] = 50;
+fail = 0;
+flashcolor = c_blue;
+timer = 0;
+zcounter = 0;

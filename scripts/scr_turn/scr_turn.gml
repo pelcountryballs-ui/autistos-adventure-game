@@ -1,0 +1,661 @@
+function scr_mnendturn(){
+    /*if (global.char[0] == 2)
+        sus = 0;
+    
+    if (global.char[1] == 2)
+        sus = 1;
+    
+    if (global.char[2] == 2)
+        sus = 2;*/
+		
+	sus = arr_find_index(global.char, function(a) { return a == DRCharacter.Susie });
+    
+    techwon = 0;
+    
+    if (scr_monsterpop() == 0)
+        techwon = 1;
+    
+    if (global.flag[DRFLAG.ForceEndBattle] == 1) techwon = 1;
+    
+    if (techwon == 1)
+        scr_wincombat();
+    
+    if (techwon == 0)
+    {
+        with (obj_battlecontroller)
+        {
+            messagepriority = -1;
+            attackpriority = -1;
+        }
+        
+        scr_battlecursor_memory_reset();
+        
+        global.mnfight = 0;
+        global.myfight = 0;
+        global.bmenuno = 0;
+        global.charturn = 0;
+        skip = 0;
+        
+        for (i = 0; i < 3; i += 1)
+        {
+            global.hittarget[i] = 0;
+            
+            with (global.charinstance[i])
+                tu = 0;
+            
+            hptarget = global.char[i];
+            
+            if (global.char[i] != 0 && global.hp[hptarget] <= 0)
+            {
+                healamt = ceil(global.maxhp[hptarget] / 8);
+                dmgwr = instance_create(global.charinstance[i].x, (global.charinstance[i].y + global.charinstance[i].myheight) - 24, obj_dmgwriter);
+                    
+                with (dmgwr)
+                {
+                    delay = 1;
+                    type = 3;
+                }
+                    
+                dmgwr.damage = scr_heal(i, healamt);
+                    
+                if (global.hp[hptarget] >= 1)
+                {
+                    with (dmgwr)
+                        specialmessage = 4;
+                }
+            }
+        }
+        
+		global.charturn = -1
+		scr_nexthero()
+        
+        for (i = 0; i < 3; i += 1)
+        {
+            global.acting[i] = 0;
+            global.actingsingle[i] = 0;
+            global.actingsimul[i] = 0;
+            global.actingtarget[i] = 0;
+            global.temptension[i] = global.tension;
+            global.charspecial[i] = 0;
+            global.targeted[i] = 0;
+            global.charaction[i] = 0;
+            global.faceaction[i] = 0;
+            global.monsterattackname[i] = " ";
+        }
+        
+        global.currentactingchar = 0;
+        
+        with (obj_monsterparent)
+        {
+            attacked = 0;
+            talked = 0;
+			nextact = 0;
+			for (i = 0; i < DRCharacter.__MAX__; i++)
+				acting[i] = 0;
+        }
+        
+        if (skip == 1) {
+			if (global.char[0] == DRCharacter.Susie && global.charauto[DRCharacter.Susie] == 1)
+            {
+                global.acting[0] = 1;
+                global.myfight = 3;
+            }
+            
+            scr_endturn();
+        }
+        
+        for (i = 0; i < 12; i += 1)
+        {
+            for (j = 0; j < 3; j += 1)
+                tempitem[i][j] = global.item[i];
+        }
+    }
+}
+
+function scr_endturn(){
+	if global.charturn < array_length(tempitem[i])
+    for (i = 0; i < 12; i += 1) global.item[i] = tempitem[i][global.charturn];
+    
+    for (i = 0; i < 12; i += 1)
+        for (j = 0; j < 3; j += 1)
+            tempitem[i][j] = global.item[i];
+    
+    moveswapped = false;
+    
+    with (obj_writer) instance_destroy();
+    with (obj_face) instance_destroy();
+    with (obj_smallface) instance_destroy();
+    
+    global.attacking = false;
+    
+    for (i = 0; i < 3; i += 1) {
+        global.monsterattackname[i] = " ";
+		var character = global.char[i]
+        
+        if (global.charauto[character] == true && global.hp[character] > 0 && character > 0) {
+			var dat = scr_character_autotype(character)
+			global.charaction[i] = dat[0]
+			global.acting[i] = true
+			switch dat[0] {
+				default: break case 1:
+				global.charaction[i] = 0
+				for (j = 0; j < array_length(global.monster); ++j) { if global.monster[j] global.chartarget[i] = j break }
+				break case 2: 
+					global.charspecial[i] = global.spell[character][scr_wrap_newer(dat[1], 0, array_length(global.spell[character]))] 
+					var lowesthp = int64(99999999)
+					for (j = 0; j < array_length(global.char); ++j) {
+					    if lowesthp > global.hp[global.char[j]] { global.chartarget[i] = j lowesthp = global.hp[global.char[j]]}
+					}
+				break case 4: scr_defend(i, false) 
+				break case 10: 
+					global.charspecial[i] = DRSpell.Spare 
+					global.charaction[i] = 2 
+					var foundone = false
+					for (j = 0; j < array_length(global.monster) && !foundone; ++j) {
+					    if (global.mercymod[j] >= 100 && global.monster[j]) {foundone = true global.chartarget[i] = j}
+					}
+					if !foundone global.charaction[i] = 0
+				break
+			}
+        }
+        
+        if (global.charaction[i] == 1)
+            global.attacking = true;
+    }
+    
+    __noactors = 1;
+    
+    if (global.acting[0] == 1)
+        __noactors = 0;
+    
+    for (__noactorsi = 0; __noactorsi < 3; __noactorsi++)
+    {
+        if (global.actingsingle[__noactorsi] == 1)
+            __noactors = 0;
+			
+		debug_log("global.actingsingle[{0}] = {1}", __noactorsi, global.actingsingle[__noactorsi]);
+		debug_log("global.acting[{0}] = {1}", __noactorsi, global.acting[__noactorsi]);
+		debug_log("global.actingsimul[{0}] = {1}", __noactorsi, global.actingsimul[__noactorsi]);
+    }
+    
+    if (__noactors == 1)
+    {
+        scr_attackphase();
+    }
+    else
+    {
+		debug_log("Doing acts!");
+        global.charturn = 3;
+        global.myfight = 3;
+        global.currentactingchar = 0;
+        
+        //if (global.acting[0] == 0)
+        //    scr_nextact();
+        
+        if (global.acting[0] == 1 && global.actingsimul[0] == 1)
+            scr_act_simul();
+		else 
+            scr_nextact();
+    }
+    
+    with (obj_battlecontroller)
+    {
+        messagepriority = -1;
+        attackpriority = -1;
+    }
+}
+
+function scr_retarget(arg0)
+{
+    thistarget = global.chartarget[arg0];
+    cancelattack = 0;
+    
+    if (thistarget == 0)
+    {
+        if (global.monster[0] == 0)
+            thistarget = 1;
+    }
+    
+    if (thistarget == 1)
+    {
+        if (global.monster[1] == 0)
+            thistarget = 2;
+    }
+    
+    if (thistarget == 2)
+    {
+        if (global.monster[2] == 0)
+            thistarget = 3;
+        
+        if (thistarget == 3 && global.monster[0] == 1)
+            thistarget = 0;
+        
+        if (thistarget == 3 && global.monster[1] == 1)
+            thistarget = 1;
+        
+        if (thistarget == 3)
+            cancelattack = 1;
+    }
+    
+    global.chartarget[arg0] = thistarget;
+}
+
+function scr_retarget_spell() {
+    cancelattack = true;
+    
+	for (i = 0; i < array_length(global.monster); ++i) {
+		var truei = (star + i) % array_length(global.monster)
+	    if global.monster[truei] == true{
+			cancelattack = false
+			star = truei
+			break
+		}
+	}
+}
+
+function scr_ambush() {
+    with (obj_writer) instance_destroy();
+    with (obj_face) instance_destroy();
+    
+    global.charturn = array_length(global.charmove);
+    global.mnfight = 1;
+    global.myfight = -1;
+    
+    with (obj_monsterparent) ambushed = true;
+}
+
+function scr_nexthero() {
+    moveswapped = false;
+    prevturn = global.charturn;
+    
+    var endturn = false;
+    
+	for (i = global.charturn + 1; i <= array_length(global.charmove) && !moveswapped; ++i) {
+		moveswapped = true
+		if i >= array_length(global.charmove) {endturn = true global.charturn = i; moveswapped = false} // No one Left
+		else if scr_charcan(i) {
+			global.charturn = i
+		} else { // This Character Cannot Move. (Try Next Character)
+			moveswapped = false
+			if global.char[i] > DRCharacter.None debug_log(stringsetsub("Hero '~1' Cannot Move.", global.charname[global.char[i]]))
+		}
+	}
+	
+    if (endturn == true) scr_endturn();
+    if (moveswapped == true) global.bmenuno = 0;
+    
+    if (prevturn >= 0 && !endturn) {
+        global.temptension[global.charturn] = global.tension;
+        for (i = 0; i < 12; i += 1) tempitem[i][global.charturn] = tempitem[i][prevturn];
+    }
+	
+	return endturn
+}
+
+function scr_prevhero() {
+    prevturn = global.charturn;
+    moveswapped = false;
+    
+	if global.charturn > 0 { // No need to run Calculations if we know it'll fail anyways.
+		for (i = global.charturn - 1; i >= 0 && !moveswapped; --i) {
+			if scr_charcan(i) {
+				global.charturn = i
+				moveswapped = true
+			}
+		}
+	}
+    
+    if (moveswapped == true) {
+        global.bmenuno = 0;
+		with (obj_monsterparent) acting[global.char[global.charturn]] = false;
+		with (obj_monsterparent) acting[global.char[other.prevturn]] = false;
+        
+        global.actingsingle[global.charturn] = 0;
+        global.actingsimul[global.charturn] = 0;
+        global.faceaction[global.charturn] = 0;
+        global.chartarget[global.charturn] = 0;
+        global.charaction[global.charturn] = 0;
+        global.charspecial[global.charturn] = 0;
+        movenoise = true;
+    
+	    if (idefendedthisturn > 0) {
+	        idefendedthisturn--;
+	        mercytotal -= 40;
+	    }
+		
+		global.acting[prevturn] = false
+		global.faceaction[prevturn] = 0
+		global.charspecial[prevturn] = 0
+		global.chartarget[prevturn] = 0
+	    for (i = 0; i < 12; i += 1) tempitem[i][0] = global.item[i];
+	    global.tension = global.temptension[global.charturn];
+    }
+	
+	return moveswapped
+}
+
+function scr_actselect(star, action) {
+    if (i_ex(global.monsterinstance[star]))
+		global.monsterinstance[star].acting[global.char[global.charturn]] = action + 1;
+    
+    /*if (global.char[global.charturn] == DRCharacter.Kris)
+    {
+        global.actingsimul[0] = actsimul[action];
+        global.acting[0] = 1;
+        global.actingsingle[0] = 1;
+        global.actingtarget[global.charturn] = star;
+        
+        for (i = 0; i < 3; i += 1)
+        {
+            if (global.acting[i] == 1)
+            {
+                global.faceaction[i] = 6;
+                global.charaction[i] = 9;
+            }
+        }
+    }
+    else*/
+    {
+        global.actingtarget[global.charturn] = star;
+        global.actingsingle[global.charturn] = 1;
+        global.actingsimul[global.charturn] = actsimul[action];
+        global.faceaction[global.charturn] = 6;
+        global.charaction[global.charturn] = 9;
+    }
+}
+
+function scr_nextact() {
+	debug_log("------------ scr_nextact")
+    global.currentactingchar = 0;
+	
+    global.acting[0] = false;
+    global.acting[1] = false;
+    global.acting[2] = false;
+    //global.actingsingle[global.currentactingchar] = 0;
+	
+    __minstance = global.monsterinstance[global.actingtarget[global.currentactingchar]];
+    
+    with (__minstance) {
+		//acting[DRCharacter.Kris] = 0;
+		for (i = 1; i < DRCharacter.__MAX__; i++) {
+			//acting[i] = 0;
+			actcon[i] = 0;
+		}
+    }
+    
+    var singleactcomplete = 0;
+	debug_log("global.currentactingchar = {0}", global.currentactingchar);
+    while (global.currentactingchar < 3) {
+			debug_log("global.actingsingle[{0}] = {1}", global.currentactingchar, global.actingsingle[global.currentactingchar]);
+            if (global.actingsingle[global.currentactingchar] == 1)
+            {
+				if (global.actingsimul[global.currentactingchar] != 0) break; // let all simul acts be handled by scr_act_simul
+                __minstance = global.monsterinstance[global.actingtarget[global.currentactingchar]];
+				with (__minstance)
+					actcon[global.char[global.currentactingchar]] = 1;
+					
+				debug_log("actcon[{0}] = {1}", global.char[global.currentactingchar], 1);
+				
+				//if (global.actingsimul[global.currentactingchar] == 0)
+					singleactcomplete = true;
+					
+				global.actingsingle[global.currentactingchar] = 0;
+				break;
+            }
+        global.currentactingchar++;
+		debug_log("++global.currentactingchar = {0}", global.currentactingchar);
+    }
+	
+	
+	debug_log("singleactcomplete = {0}", singleactcomplete);
+	debug_log("------------")
+    
+    if (!singleactcomplete)
+    {
+		debug_log("Going to ACT SIMUL phase", singleactcomplete);
+        scr_act_simul();
+    }
+    if (global.currentactingchar >= 3)
+    {
+		debug_log("Going to ATTACK phase", singleactcomplete);
+        with (obj_monsterparent)
+        {
+			for (i = 1; i < DRCharacter.__MAX__; i++)
+				acting[i] = 0;
+        }
+        
+        global.currentactingchar = 0;
+        scr_attackphase();
+    }
+}
+
+function scr_act_simul(){
+	debug_log("------------ scr_act_simul")
+	__simulcount = 0;
+    
+    for (__ii = global.currentactingchar; __ii < 3; __ii++)
+    {
+        __foundsimul = 0;
+        
+        if (global.actingsingle[__ii] == 1 && instance_exists(obj_monsterparent))
+        {
+			if (global.actsimul[global.char[__ii]][global.actingtarget[__ii]][global.actingchoice[__ii]] == 1) {
+				obj_monsterparent.simulorder[global.char[__ii]] = __simulcount;
+                global.monsterinstance[global.actingtarget[__ii]].actcon[global.char[__ii]] = 1;//global.char[__ii] == DRCharacter.Kris ? 0 : 1;
+					
+				__foundsimul = 1;
+			}
+            
+            if (__foundsimul)
+            {
+                global.actingsingle[__ii] = 0;
+                __simulcount++;
+            }
+            
+            obj_monsterparent.simultotal = __simulcount;
+			
+			if !__foundsimul break; //stop if it's not a simul act and let it be handled by scr_nextact
+        }
+    }
+	
+	debug_log("------------")
+}
+
+function scr_damage_enemy(star, damage){
+    dm = instance_create(global.monsterx[star], (global.monstery[star] + 20) - (global.hittarget[star] * 20), obj_dmgwriter);
+    
+    /*if (caster < 4)
+    {
+        dm.type = global.char[caster] - 1;
+        
+        if (global.char[caster] == 4)
+            dm.type = 6;
+    }
+    
+    if (caster == 5)
+        dm.type = 5;*/
+	dm.type = 0;
+	dm.char = global.char[caster];
+    
+    dm.damage = damage;
+    global.monsterhp[star] -= damage;
+    
+    if (damage > 0) {
+        with (global.monsterinstance[star])
+        {
+            shakex = 9;
+            state = 3;
+            hurttimer = 30;
+        }
+        
+        if (i_ex(global.monsterinstance[star])) global.monsterinstance[star].hurtamt = damage;
+    }
+    
+    global.hittarget[star] += 1;
+    
+    if (damage == 0) {
+        with (global.monsterinstance[star]) {
+            hurtamt = 0;
+            
+            if (hurttimer <= 15 && candodge == true) {
+                dodgetimer = 0;
+                state = 4;
+            }
+        }
+    }
+    
+    var a = false; // if A is not false it WILL not allow death.
+    
+    if (global.monsterhp[star] <= 0 && a == false) {
+        with (global.monsterinstance[star])
+            scr_monsterdefeat();
+    }
+}
+
+function scr_turntimer(time){
+    if (global.turntimer < time)
+        global.turntimer = time;
+}
+
+function scr_bulletspawner(x, y, obj){
+    __dc = instance_create(x, y, obj);
+    __dc.creator = myself;
+    __dc.creatorid = id;
+    __dc.target = mytarget;
+    __dc.damage = global.monsterat[myself] * 5;
+    return __dc;
+}
+
+function scr_simultext(arg0){
+    __yoffset = simulorder[arg0] * 30;
+    global.typer = 4;
+    battlewriter = instance_create(xx + 30, yy + 376 + __yoffset, obj_writer);
+}
+
+function scr_monster_make_tired(arg0)
+{
+    if (image_alpha > 0)
+    {
+        if (global.monsterstatus[arg0] == 0)
+        {
+            __tiredwriter = instance_create(global.monsterx[arg0], (global.monstery[arg0] - (global.hittarget[arg0] * 20)) + 20, obj_dmgwriter);
+            __tiredwriter.type = 13;
+            global.hittarget[arg0] += 1;
+            snd_play_x(snd_spellcast, 0.5, 0.9);
+        }
+        
+        global.monstercomment[arg0] = "(Tired)";
+        global.monsterstatus[arg0] = 1;
+    }
+}
+
+function scr_enemyhurt_tired_after_damage(arg0)
+{
+    if (global.monsterhp[myself] <= (global.monstermaxhp[myself] * arg0))
+        scr_monster_make_tired(myself);
+}
+
+function scr_enemy_hurt(){
+    hurttimer -= 1;
+    
+    if (hurttimer < 0)
+        state = 0;
+    else {
+        if (global.monster[myself] == 0) scr_defeatrun();
+        
+        hurtshake += 1;
+        
+        if (hurtshake > 1) {
+			if abs(shakex) > 0 shakex -= sign(shakex)
+            
+            shakex = -shakex;
+            hurtshake = 0;
+        }
+    }
+}
+
+function scr_defeatrun(){
+	if !variable_struct_exists(self, "__frozen")   __frozen = false
+	if !variable_struct_exists(self, "__spared")   __spared = false
+	if !variable_struct_exists(self, "fatal")		  fatal = false
+	if variable_struct_exists(self, "myself") {
+		switch global.flag[EncountersCore_EncounterResult_Enemy1 + myself] {
+			case MONSTERS_DEFEATTYPES_Frozen: __frozen = true break;
+			
+			case MONSTERS_DEFEATTYPES_Pacify:
+			case MONSTERS_DEFEATTYPES_Spare: __spared = true break;
+		}
+	}
+	
+	if (object_is_ancestor(object_index, obj_monsterparent)) {
+        
+		var messageanimindex = -1
+		var brokenbond = true // By default a Bond is likely broken.
+			
+	    if __frozen messageanimindex = 12 // Make Status Text "Frozen."
+		if __spared brokenbond = false
+		
+		if brokenbond {
+	        global.flag[63] = true;
+	        if (global.flag[global.monstertype[myself] + 600] != -1 && recruitable) {
+				global.flag[global.monstertype[myself] + 600] = -1;
+				if messageanimindex < 0 messageanimindex = 7
+			}
+		}
+		if messageanimindex >= 0 {
+	            _rtext = instance_create(global.monsterx[myself], global.monstery[myself] - 40, obj_recruitanim);
+	            _rtext.image_index = messageanimindex;	
+		}
+    }
+    else fatal = false
+	
+	
+	var highestpriority_id = 0
+	var highestpriority = 0
+	
+	var animdat = scr_getdefeatanimationdataarray()
+	
+	//var debugrandomchoice = true
+	//if debugrandomchoice highestpriority_id = irandom(array_length(animdat))
+	//else
+	for (var i = 0; i < array_length(animdat); ++i) {
+		with animdat[i] {
+			try {
+				if highestpriority <= priority && method(other, condition)() {
+					highestpriority_id = i
+					highestpriority = priority
+				}
+			} catch (ex) {
+				debug_log("Animation with object index of " + string(object) + " Had an Error when trying to get, Removing from List.\n----------------------------\n{0}", ex.longMessage)
+				array_delete(animdat, i, 1)
+				i--
+			}
+		}
+	}
+	_spritetochangeto = hurtsprite
+	
+    var defeatanim_data = animdat[highestpriority_id]
+    var defeatanim = instance_create(x, y, defeatanim_data.object)
+	with defeatanim_data method(other, postcreate)(defeatanim)
+	
+    defeatanim.sprite_index = _spritetochangeto;
+    defeatanim.image_index = 0;
+    defeatanim.image_xscale = image_xscale;
+    defeatanim.image_yscale = image_yscale;
+    instance_destroy();
+}
+
+function scr_randomtarget_old() {
+    abletotarget = false;
+	
+	for (i = 0; i < array_length(global.charcantarget); ++i) {
+	    if global.charcantarget[i] abletotarget = true
+	}
+    
+    mytarget = irandom(array_length(global.charcantarget)-1);
+    
+    if (abletotarget == true) while (global.charcantarget[mytarget] == false) mytarget = irandom(array_length(global.charcantarget)-1);
+    else mytarget = 3;
+    
+    global.targeted[mytarget] = true;
+}
